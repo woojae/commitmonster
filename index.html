@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>commitmonster — Visual Studio Code</title>
+  <meta name="description" content="A furry blue monster eats your codebase, one character at a time, inside a Visual Studio Code lookalike.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%232b7de9'/%3E%3Ccircle cx='23' cy='22' r='9' fill='%23fff'/%3E%3Ccircle cx='41' cy='22' r='9' fill='%23fff'/%3E%3Ccircle cx='25' cy='24' r='4' fill='%23111'/%3E%3Ccircle cx='39' cy='24' r='4' fill='%23111'/%3E%3Cpath d='M12 40 Q32 62 52 40 Z' fill='%2312070c'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.36/dist/codicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="workbench" id="workbench">
+
+    <!-- Title bar -->
+    <header class="titlebar">
+      <div class="titlebar-left">
+        <span class="traffic"><i class="tl tl-red"></i><i class="tl tl-yellow"></i><i class="tl tl-green"></i></span>
+        <nav class="menubar" aria-label="Menu">
+          <button type="button" data-menu="File">File</button>
+          <button type="button" data-menu="Edit">Edit</button>
+          <button type="button" data-menu="Selection">Selection</button>
+          <button type="button" data-menu="View">View</button>
+          <button type="button" data-menu="Go">Go</button>
+          <button type="button" data-menu="Run">Run</button>
+          <button type="button" data-menu="Terminal">Terminal</button>
+          <button type="button" data-menu="Help">Help</button>
+        </nav>
+      </div>
+      <button type="button" class="titlebar-search" id="open-palette" title="Command Palette (⇧⌘P)">
+        <i class="codicon codicon-search"></i><span>commitmonster</span>
+      </button>
+      <div class="titlebar-right">
+        <i class="codicon codicon-layout-sidebar-left" id="toggle-sidebar" title="Toggle Primary Side Bar (⌘B)"></i>
+        <i class="codicon codicon-layout-panel" id="toggle-panel" title="Toggle Panel (⌘J)"></i>
+        <i class="codicon codicon-layout"></i>
+      </div>
+    </header>
+
+    <!-- Activity bar -->
+    <aside class="activitybar" aria-label="Activity bar">
+      <button type="button" class="activity is-active" data-view="explorer" title="Explorer (⇧⌘E)"><i class="codicon codicon-files"></i></button>
+      <button type="button" class="activity" data-view="search" title="Search (⇧⌘F)"><i class="codicon codicon-search"></i></button>
+      <button type="button" class="activity" data-view="scm" title="Source Control (⌃⇧G)"><i class="codicon codicon-source-control"></i><span class="badge" id="scm-badge" hidden>0</span></button>
+      <button type="button" class="activity" data-view="debug" title="Run and Debug (⇧⌘D)"><i class="codicon codicon-debug-alt"></i></button>
+      <button type="button" class="activity" data-view="extensions" title="Extensions (⇧⌘X)"><i class="codicon codicon-extensions"></i></button>
+      <div class="activity-spacer"></div>
+      <button type="button" class="activity" title="Accounts"><i class="codicon codicon-account"></i></button>
+      <button type="button" class="activity" title="Manage" id="open-settings"><i class="codicon codicon-settings-gear"></i></button>
+    </aside>
+
+    <!-- Side bar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-title"><span id="sidebar-title-text">Explorer</span><i class="codicon codicon-ellipsis"></i></div>
+
+      <div class="sidebar-view" data-view="explorer">
+        <section class="pane is-open" id="pane-monster">
+          <header class="pane-header"><i class="codicon codicon-chevron-down"></i><span>Commit Monster</span></header>
+          <div class="pane-body monster-pane">
+            <div class="monster-face" aria-hidden="true">
+              <canvas id="cm-avatar" width="96" height="72"></canvas>
+            </div>
+            <button type="button" class="btn btn-primary" id="cm-start">Feed Me</button>
+            <label class="field">
+              <span class="field-label">Hunger <output id="cm-speed-out">5</output></span>
+              <input id="cm-speed" type="range" min="1" max="10" value="5" aria-label="Eating speed">
+            </label>
+            <label class="check">
+              <input type="checkbox" id="cm-sound" checked> Crunch sounds
+            </label>
+            <dl class="stats" aria-live="polite">
+              <div><dt>Lines</dt><dd id="cm-lines">0</dd></div>
+              <div><dt>Chars</dt><dd id="cm-chars">0</dd></div>
+              <div><dt>Bugs</dt><dd id="cm-bugs">0</dd></div>
+              <div><dt>Tech debt</dt><dd id="cm-debt">100%</dd></div>
+            </dl>
+            <p class="hint">Click inside the editor while he eats to make him frantic.</p>
+          </div>
+        </section>
+
+        <section class="pane is-open" id="pane-files">
+          <header class="pane-header"><i class="codicon codicon-chevron-down"></i><span>Snacks</span>
+            <span class="pane-actions"><i class="codicon codicon-new-file" title="New snack" id="new-snack"></i><i class="codicon codicon-collapse-all"></i></span>
+          </header>
+          <div class="pane-body">
+            <ul class="tree" id="file-tree" role="tree">
+              <li class="tree-folder is-open" role="treeitem"><span class="tree-row"><i class="codicon codicon-chevron-down"></i><i class="codicon codicon-folder-opened folder-icon"></i>snacks</span>
+                <ul id="file-list"></ul>
+              </li>
+              <li class="tree-item" role="treeitem" data-file="readme"><span class="tree-row"><span class="file-icon fi-md">i</span>README.md</span></li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="pane" id="pane-outline">
+          <header class="pane-header"><i class="codicon codicon-chevron-right"></i><span>Outline</span></header>
+          <div class="pane-body"><p class="pane-empty" id="outline-text">No symbols found in document. Only crumbs.</p></div>
+        </section>
+        <section class="pane" id="pane-timeline">
+          <header class="pane-header"><i class="codicon codicon-chevron-right"></i><span>Timeline</span></header>
+          <div class="pane-body"><ul class="timeline" id="timeline"></ul></div>
+        </section>
+      </div>
+
+      <div class="sidebar-view" data-view="search" hidden>
+        <div class="search-box"><input type="text" placeholder="Search" id="search-input"><i class="codicon codicon-search"></i></div>
+        <p class="pane-empty" id="search-results">Type to search the current snack.</p>
+      </div>
+
+      <div class="sidebar-view" data-view="scm" hidden>
+        <div class="scm-input"><input type="text" placeholder="Message (⌘Enter to commit on 'main')" id="scm-message"><button type="button" class="btn btn-primary btn-block" id="scm-commit"><i class="codicon codicon-check"></i> Commit</button></div>
+        <section class="pane is-open">
+          <header class="pane-header"><i class="codicon codicon-chevron-down"></i><span>Changes</span><span class="pane-count" id="scm-count">0</span></header>
+          <div class="pane-body"><ul class="tree" id="scm-list"></ul></div>
+        </section>
+      </div>
+
+      <div class="sidebar-view" data-view="debug" hidden>
+        <div class="debug-actions"><button type="button" class="btn btn-primary btn-block" id="debug-run"><i class="codicon codicon-debug-start"></i> Run and Eat</button></div>
+        <section class="pane is-open">
+          <header class="pane-header"><i class="codicon codicon-chevron-down"></i><span>Watch</span></header>
+          <div class="pane-body">
+            <ul class="watch">
+              <li><span class="w-name">monster.hunger</span> = <span class="w-val" id="w-hunger">5</span></li>
+              <li><span class="w-name">monster.state</span> = <span class="w-val w-str" id="w-state">"hungry"</span></li>
+              <li><span class="w-name">monster.stomach.length</span> = <span class="w-val w-num" id="w-stomach">0</span></li>
+              <li><span class="w-name">codebase.remaining</span> = <span class="w-val w-num" id="w-remaining">0</span></li>
+            </ul>
+          </div>
+        </section>
+        <section class="pane is-open">
+          <header class="pane-header"><i class="codicon codicon-chevron-down"></i><span>Call Stack</span></header>
+          <div class="pane-body"><ul class="watch" id="callstack"><li class="dim">Not eating</li></ul></div>
+        </section>
+      </div>
+
+      <div class="sidebar-view" data-view="extensions" hidden>
+        <div class="search-box"><input type="text" placeholder="Search Extensions in Marketplace"><i class="codicon codicon-filter"></i></div>
+        <ul class="ext-list">
+          <li class="ext"><div class="ext-icon ext-icon-monster"></div><div><div class="ext-name">Commit Monster <span class="ext-ver">v1.0.0</span></div><div class="ext-desc">Eats your codebase. Never full.</div><div class="ext-pub">woojae <span class="ext-installed">Installed</span></div></div></li>
+          <li class="ext"><div class="ext-icon" style="background:#2c2c32">🍪</div><div><div class="ext-name">Cookie Jar <span class="ext-ver">v0.4.2</span></div><div class="ext-desc">Adds cookies to the status bar. Purely decorative.</div><div class="ext-pub">snackworks <button type="button" class="btn btn-tiny">Install</button></div></div></li>
+          <li class="ext"><div class="ext-icon" style="background:#2c2c32">🪲</div><div><div class="ext-name">Bug Seasoning <span class="ext-ver">v2.1.0</span></div><div class="ext-desc">Sprinkles TODOs on your code so it tastes better.</div><div class="ext-pub">snackworks <button type="button" class="btn btn-tiny">Install</button></div></div></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Editor group -->
+    <main class="editor-group">
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <div class="breadcrumbs" id="breadcrumbs"><span>snacks</span><i class="codicon codicon-chevron-right"></i><span id="crumb-file">util.c</span></div>
+
+      <div class="editor" id="editor">
+        <canvas id="cm-screen" aria-label="Commit Monster eating code"></canvas>
+
+        <div class="editor-empty" id="editor-empty" hidden>
+          <div class="watermark-monster" aria-hidden="true"></div>
+          <dl class="watermark">
+            <div><dt>Feed the monster</dt><dd><kbd>Space</kbd></dd></div>
+            <div><dt>Show all commands</dt><dd><kbd>⇧</kbd><kbd>⌘</kbd><kbd>P</kbd></dd></div>
+            <div><dt>Open a snack</dt><dd><kbd>⌘</kbd><kbd>P</kbd></dd></div>
+            <div><dt>Toggle terminal</dt><dd><kbd>⌘</kbd><kbd>J</kbd></dd></div>
+          </dl>
+        </div>
+
+        <div class="editor-text" id="editor-text" hidden>
+          <div class="text-gutter" id="text-gutter"></div>
+          <textarea id="cm-input" spellcheck="false" placeholder="// paste your own code here, then press Feed Me"></textarea>
+        </div>
+
+        <div class="editor-readme" id="editor-readme" hidden>
+          <h1>Commit Monster</h1>
+          <p>A furry blue monster who has never once been full. Point him at a file and he eats it, one character at a time, crumbs and all.</p>
+          <h2>Usage</h2>
+          <ol>
+            <li>Pick a snack from the <b>Explorer</b>. They are real excerpts from famous open source projects.</li>
+            <li>Set his <b>Hunger</b>. Ten is a lot.</li>
+            <li>Press <b>Feed Me</b>, or hit <kbd>Space</kbd>.</li>
+            <li>Click inside the editor while he eats to send him into a frenzy.</li>
+          </ol>
+          <h2>Feeding him your own code</h2>
+          <p>Open <b>my-code.txt</b>, paste anything, and press Feed Me. He is not picky.</p>
+          <h2>Known issues</h2>
+          <ul>
+            <li>Tech debt goes to zero, but so does the codebase.</li>
+            <li>Bugs are eaten, not fixed. He claims this is the same thing.</li>
+          </ul>
+        </div>
+
+        <div class="overlay" id="cm-overlay">
+          <div class="dialog">
+            <div class="dialog-title" id="cm-overlay-title">ME WANT CODE</div>
+            <p class="dialog-msg" id="cm-overlay-msg">pick a snack from the explorer, or paste your own<br>click the editor while he eats to make him frantic</p>
+            <div class="dialog-actions">
+              <button type="button" class="btn btn-primary" id="cm-overlay-start">Feed Me</button>
+              <button type="button" class="btn" id="cm-overlay-later">Later</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel -->
+      <section class="panel" id="panel">
+        <header class="panel-tabs">
+          <button type="button" class="panel-tab" data-panel="problems">Problems <span class="badge-inline" id="problems-badge" hidden>0</span></button>
+          <button type="button" class="panel-tab" data-panel="output">Output</button>
+          <button type="button" class="panel-tab" data-panel="debug">Debug Console</button>
+          <button type="button" class="panel-tab is-active" data-panel="terminal">Terminal</button>
+          <span class="panel-actions"><i class="codicon codicon-trash" id="clear-terminal" title="Clear"></i><i class="codicon codicon-chevron-up"></i><i class="codicon codicon-close" id="close-panel" title="Close panel"></i></span>
+        </header>
+        <div class="panel-body" data-panel="problems" hidden><ul class="problems" id="problems"></ul></div>
+        <div class="panel-body" data-panel="output" hidden><pre class="output" id="output">[Commit Monster] extension activated. Waiting for snacks.</pre></div>
+        <div class="panel-body" data-panel="debug" hidden><pre class="output" id="debug-console">monster.eat is not a function? no. monster.eat is a lifestyle.</pre></div>
+        <div class="panel-body is-active" data-panel="terminal"><div class="terminal" id="terminal"></div></div>
+      </section>
+    </main>
+
+    <!-- Status bar -->
+    <footer class="statusbar">
+      <div class="status-left">
+        <span class="status-item status-remote"><i class="codicon codicon-remote"></i></span>
+        <span class="status-item"><i class="codicon codicon-source-control"></i> main*</span>
+        <span class="status-item"><i class="codicon codicon-error"></i> <span id="st-errors">0</span> <i class="codicon codicon-warning"></i> <span id="st-warnings">0</span></span>
+        <span class="status-item" id="st-mood"><i class="codicon codicon-flame"></i> Hungry</span>
+      </div>
+      <div class="status-right">
+        <span class="status-item" id="st-pos">Ln 1, Col 1</span>
+        <span class="status-item">Spaces: 4</span>
+        <span class="status-item">UTF-8</span>
+        <span class="status-item">LF</span>
+        <span class="status-item" id="st-lang">C</span>
+        <span class="status-item" id="st-hunger" title="Hunger">🍪 Hunger 5</span>
+        <span class="status-item"><i class="codicon codicon-bell"></i></span>
+      </div>
+    </footer>
+
+    <!-- Command palette -->
+    <div class="palette" id="palette" hidden>
+      <div class="palette-box">
+        <input type="text" id="palette-input" placeholder="Type a command or a snack name" autocomplete="off">
+        <ul class="palette-list" id="palette-list"></ul>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="toasts" id="toasts"></div>
+  </div>
+
+  <script src="js/snacks.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
