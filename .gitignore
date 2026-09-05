@@ -5,3 +5,10 @@ node_modules
 .wrangler
 dist
 next-env.d.ts
+site
+.env
+.env.*
+!.env.example
+.vercel
+*.pem
+*.key
