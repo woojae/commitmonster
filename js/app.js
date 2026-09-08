@@ -9,6 +9,9 @@
   const SNACKS = window.SNACKS || [];
   const byId = Object.fromEntries(SNACKS.map((s) => [s.id, s]));
   const DEFAULT_ID = SNACKS[0] ? SNACKS[0].id : null;
+  const MAX_SOURCE_LENGTH = 50000;
+  const MAX_DISPLAY_LINES = 600;
+  const MAX_LOG_LENGTH = 20000;
 
   // ---- DOM ----------------------------------------------------------------
 
@@ -354,7 +357,9 @@
   let mmCtx = null;
 
   function normalize(src) {
-    return src.replace(/\r\n?/g, '\n').replace(/\t/g, '    ');
+    return src.slice(0, MAX_SOURCE_LENGTH)
+      .replace(/\r\n?/g, '\n').replace(/\t/g, '    ')
+      .slice(0, MAX_SOURCE_LENGTH);
   }
 
   function prepare(source) {
@@ -363,13 +368,12 @@
     const raw = source.split('\n');
     const hl = { block: false, depth: 0 };
     let offset = 0;
-    for (let r = 0; r < raw.length; r++) {
+    for (let r = 0; r < raw.length && lines.length < MAX_DISPLAY_LINES; r++) {
       const line = raw[r];
-      const chunks = [];
-      if (line.length <= cols) chunks.push(line);
-      else for (let i = 0; i < line.length; i += cols) chunks.push(line.slice(i, i + cols));
-      let sub = 0;
-      for (const text of chunks) {
+      // Check the row budget inside wrapping too: one huge line must not
+      // allocate an unbounded array before the outer-loop limit is reached.
+      for (let sub = 0; sub < Math.max(1, line.length) && lines.length < MAX_DISPLAY_LINES; sub += cols) {
+        const text = line.slice(sub, sub + cols);
         lines.push({
           text,
           colors: colorize(text, hl),
@@ -378,10 +382,8 @@
           rawStart: offset + sub,
           rawLine: r,
         });
-        sub += text.length;
       }
       offset += line.length + 1;
-      if (lines.length > 600) break;
     }
     while (lines.length > 1 && lines[lines.length - 1].text.trim() === '') lines.pop();
     return lines;
@@ -459,7 +461,14 @@
     const syms = [];
     const re = /^\s*(?:(?:static|pub|async|export|unsigned)\s+)*(?:fn|func|def|function|int|char|void|sds|class|impl|struct|type)\b[^(=\n]*?([A-Za-z_][\w:<>]*)\s*(?:\(|\{|:|<|$)/gm;
     let m;
-    while ((m = re.exec(src)) && syms.length < 12) syms.push(m[1]);
+    // Limit each regex input so long identifiers cannot trigger excessive
+    // backtracking while extracting this decorative outline.
+    for (const line of src.split('\n')) {
+      re.lastIndex = 0;
+      m = re.exec(line.slice(0, 256));
+      if (m) syms.push(m[1]);
+      if (syms.length >= 12) break;
+    }
     outlineText.textContent = syms.length
       ? syms.map((s) => `ƒ ${s}`).join('\n')
       : 'No symbols found in document. Only crumbs.';
@@ -1015,6 +1024,7 @@
   }
 
   function openFile(id, opts = {}) {
+    if (typeof id !== 'string' || (id !== 'readme' && !Object.hasOwn(byId, id))) return;
     if (!ui.openTabs.includes(id)) ui.openTabs.push(id);
     ui.activeId = id;
     const isSnack = !!byId[id];
@@ -1062,6 +1072,7 @@
     const snack = byId[id];
     let source = snack.code;
     if (id === 'own') {
+      limitInput();
       source = input.value.trim() ? input.value : '// me see empty jar. me sad.\n// paste code and try again';
     }
     state.fileId = id;
@@ -1236,12 +1247,12 @@
   }
 
   function outLog(text) {
-    outputEl.textContent += `\n${text}`;
+    outputEl.textContent = `${outputEl.textContent}\n${text}`.slice(-MAX_LOG_LENGTH);
     outputEl.scrollTop = outputEl.scrollHeight;
   }
 
   function debugLog(text) {
-    debugConsoleEl.textContent += `\n${text}`;
+    debugConsoleEl.textContent = `${debugConsoleEl.textContent}\n${text}`.slice(-MAX_LOG_LENGTH);
   }
 
   function renderProblems() {
@@ -1286,8 +1297,8 @@
     scmBadge.textContent = ids.length;
     scmBadge.hidden = ids.length === 0;
     scmList.innerHTML = ids.length
-      ? ids.map((id) => `<li class="tree-item"><span class="tree-row" style="color:#f14c4c">${fileIcon(id)}${esc(fileName(id))}<span style="margin-left:auto;padding-right:10px">D</span></span></li>`).join('')
-      : '<li class="pane-empty" style="padding-left:20px">No changes. Feed him first.</li>';
+      ? ids.map((id) => `<li class="tree-item"><span class="tree-row scm-deleted">${fileIcon(id)}${esc(fileName(id))}<span class="scm-deleted-label">D</span></span></li>`).join('')
+      : '<li class="pane-empty scm-empty">No changes. Feed him first.</li>';
   }
 
   function commit() {
@@ -1296,7 +1307,7 @@
       showToast('Nothing to commit. Feed the monster first.', { kind: 'warning' });
       return;
     }
-    const msg = $('scm-message').value.trim() || 'feat: remove technical debt';
+    const msg = $('scm-message').value.slice(0, 1000).trim() || 'feat: remove technical debt';
     tcmd(`git commit -am "${msg}"`);
     tlog(`<span class="t-dim">[main ${Math.random().toString(16).slice(2, 9)}]</span> ${esc(msg)}`);
     tlog(` ${n} file${n === 1 ? '' : 's'} changed, 0 insertions(+), ${state.stats.lines} deletions(-)`);
@@ -1364,6 +1375,12 @@
     panel.hidden = !panel.hidden;
   }
 
+  function limitInput() {
+    if (input.value.length <= MAX_SOURCE_LENGTH) return;
+    input.value = input.value.slice(0, MAX_SOURCE_LENGTH);
+    showToast('This snack is too big. Kept the first 50,000 characters.', { kind: 'warning' });
+  }
+
   function updateTextGutter() {
     const n = Math.max(1, input.value.split('\n').length);
     let s = '';
@@ -1376,13 +1393,16 @@
     const q = searchInput.value.trim().toLowerCase();
     if (!q) { searchResults.textContent = 'Type to search the current snack.'; return; }
     const snack = byId[ui.activeId];
-    const src = ui.activeId === 'own' ? input.value : snack ? snack.code : '';
+    const src = (ui.activeId === 'own' ? input.value : snack ? snack.code : '').slice(0, MAX_SOURCE_LENGTH);
     const hits = [];
+    let count = 0;
     src.split('\n').forEach((line, i) => {
-      if (line.toLowerCase().includes(q)) hits.push(`<div style="padding:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="color:var(--fg-dim)">${i + 1}</span> ${esc(line.trim())}</div>`);
+      if (!line.toLowerCase().includes(q)) return;
+      count += 1;
+      if (hits.length < 40) hits.push(`<div class="search-hit"><span class="search-hit-line">${i + 1}</span> ${esc(line.trim())}</div>`);
     });
     searchResults.innerHTML = hits.length
-      ? `<div style="margin-bottom:4px">${hits.length} result${hits.length === 1 ? '' : 's'} in ${esc(fileName(ui.activeId))}</div>${hits.slice(0, 40).join('')}`
+      ? `<div class="search-summary">${count} result${count === 1 ? '' : 's'} in ${esc(fileName(ui.activeId))}</div>${hits.join('')}`
       : 'No results found. Maybe he ate it.';
   }
 
@@ -1467,7 +1487,7 @@
         }
         return `<li class="${i === paletteIndex ? 'is-active' : ''}" data-index="${i}"><i class="codicon codicon-${c.icon}"></i><span>${label}</span>${c.hint ? `<span class="pl-hint">${esc(c.hint)}</span>` : ''}</li>`;
       }).join('')
-      : '<li><span style="color:var(--fg-dim)">No matching commands. He ate them.</span></li>';
+      : '<li><span class="palette-empty">No matching commands. He ate them.</span></li>';
     const active = paletteList.querySelector('.is-active');
     if (active) active.scrollIntoView({ block: 'nearest' });
   }
@@ -1498,7 +1518,7 @@
   stMood.addEventListener('click', feed);
   $('st-errors').parentElement.addEventListener('click', () => showPanel('problems'));
 
-  input.addEventListener('input', () => { updateTextGutter(); updateSearch(); });
+  input.addEventListener('input', () => { limitInput(); updateTextGutter(); updateSearch(); });
   input.addEventListener('scroll', () => { textGutter.style.transform = `translateY(${-input.scrollTop}px)`; });
 
   fileTree.addEventListener('click', (e) => {
