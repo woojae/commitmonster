@@ -137,12 +137,8 @@
       </div>
 
       <div class="sidebar-view" data-view="extensions" hidden>
-        <div class="search-box"><input type="text" placeholder="Search Extensions in Marketplace"><i class="codicon codicon-filter"></i></div>
-        <ul class="ext-list">
-          <li class="ext"><div class="ext-icon ext-icon-monster"></div><div><div class="ext-name">Commit Monster <span class="ext-ver">v1.0.0</span></div><div class="ext-desc">Eats your codebase. Never full.</div><div class="ext-pub">woojae <span class="ext-installed">Installed</span></div></div></li>
-          <li class="ext"><div class="ext-icon ext-icon-snack">🍪</div><div><div class="ext-name">Cookie Jar <span class="ext-ver">v0.4.2</span></div><div class="ext-desc">Adds cookies to the status bar. Purely decorative.</div><div class="ext-pub">snackworks <button type="button" class="btn btn-tiny">Install</button></div></div></li>
-          <li class="ext"><div class="ext-icon ext-icon-snack">🪲</div><div><div class="ext-name">Bug Seasoning <span class="ext-ver">v2.1.0</span></div><div class="ext-desc">Sprinkles TODOs on your code so it tastes better.</div><div class="ext-pub">snackworks <button type="button" class="btn btn-tiny">Install</button></div></div></li>
-        </ul>
+        <div class="search-box"><input type="text" id="ext-search" placeholder="Search Extensions in Marketplace" autocomplete="off"><i class="codicon codicon-filter"></i></div>
+        <ul class="ext-list" id="ext-list"></ul>
       </div>
     </aside>
 
@@ -168,6 +164,8 @@
           <div class="text-gutter" id="text-gutter"></div>
           <textarea id="cm-input" spellcheck="false" maxlength="50000" aria-label="Your code (up to 50,000 characters)" placeholder="// paste your own code here (up to 50,000 characters), then press Feed Me"></textarea>
         </div>
+
+        <div class="editor-readme editor-ext" id="editor-ext" hidden></div>
 
         <div class="editor-readme" id="editor-readme" hidden>
           <h1>Commit Monster</h1>
@@ -230,6 +228,7 @@
         <span class="status-item">UTF-8</span>
         <span class="status-item">LF</span>
         <span class="status-item" id="st-lang">C</span>
+        <span class="status-item" id="st-cookies" title="Cookie Jar" hidden>🍪 ×0</span>
         <span class="status-item" id="st-hunger" title="Hunger">🍪 Hunger 5</span>
         <span class="status-item"><i class="codicon codicon-bell"></i></span>
       </div>

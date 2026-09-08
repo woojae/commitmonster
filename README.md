@@ -40,6 +40,21 @@ Then visit http://localhost:8000.
 | Command palette | `⇧⌘P` or `F1`; `⌘P` for snacks only |
 | Toggle side bar / panel | `⌘B` / `⌘J` |
 | Your own code | Open `my-code.txt`, paste, press Feed Me |
+| Extensions | `⇧⌘X`, search the list, click a row for details, Install / Uninstall |
+
+## Extensions
+
+The Extensions view is a tiny marketplace. Installs are remembered in
+`localStorage`.
+
+- **Cookie Jar** puts a jar in the status bar. He earns a cookie every 8 lines
+  he eats. Click the jar to give him one: a frenzy while he is eating, more
+  hunger while he is not.
+- **Bug Seasoning** sprinkles `TODO`, `FIXME` and `HACK` comments through every
+  snack before he eats it, so the Problems panel fills up and the bug counter
+  climbs faster.
+- **Commit Monster** cannot be uninstalled. He ate the uninstaller.
 
 A small console API is exposed as `window.CommitMonster` (`feed`, `pause`,
-`resume`, `frenzy`, `openFile`, `commit`, `tick`).
+`resume`, `frenzy`, `openFile`, `commit`, `tick`, `install`, `uninstall`,
+`extensions`).

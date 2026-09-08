@@ -378,6 +378,24 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
 .ext-desc { font-size: 12px; color: var(--fg); margin: 2px 0; }
 .ext-pub { font-size: 11px; color: var(--fg-dim); display: flex; align-items: center; }
 .ext-installed { margin-left: auto; color: var(--fg-dim); font-style: italic; }
+.ext.is-active { background: var(--list-active, #04395e); }
+.ext-pub .btn-tiny { margin-left: auto; }
+.ext-pub .btn-uninstall { background: #3a3d41; }
+.ext-pub .btn-uninstall:hover { background: #45494e; }
+.ext-empty { padding: 8px 12px; color: var(--fg-dim); font-size: 12px; }
+.ext-page-head { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 8px; }
+.ext-page-head .ext-icon { width: 96px; height: 96px; font-size: 56px; border-radius: 8px; }
+.ext-page-head h1 { border: 0; margin: 0 0 4px; padding: 0; }
+.ext-page-head h1 .ext-ver { font-size: 14px; margin-left: 8px; }
+.ext-page-meta { font-size: 12px; color: var(--fg-dim); display: flex; gap: 8px; flex-wrap: wrap; }
+.ext-page-meta .ext-stars { color: #d7ba7d; }
+.ext-page-desc { margin: 8px 0; }
+.ext-page-actions { display: flex; gap: 8px; align-items: center; }
+.ext-page-actions .btn { height: 24px; padding: 0 12px; font-size: 12px; }
+.ext-page-actions .ext-installed { margin-left: 0; }
+.ext-page h2 { font-size: 16px; }
+.ext-page ul { padding-left: 22px; }
+.ext-page code { font-family: var(--font-mono); font-size: 12px; background: #2c2c32; padding: 1px 4px; border-radius: 3px; }
 
 /* ---- Editor group ------------------------------------------------------- */
 
