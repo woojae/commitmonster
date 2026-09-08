@@ -26,6 +26,8 @@ Then visit http://localhost:8000.
   Redis, curl, Go, CPython, React and Rust; each carries its license in its
   header comment.
 - `js/app.js` — the monster, the canvas editor, and all the workbench wiring.
+- `vendor/` — pinned local copies of the Codicons and Press Start 2P fonts, so
+  the page loads nothing from third-party hosts (see `vendor/README.md`).
 
 ## Controls
 

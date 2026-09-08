@@ -1,5 +1,22 @@
 /* Commit Monster — a VS Code (Dark+) lookalike that a blue monster eats. */
 
+@font-face {
+  font-family: "Press Start 2P";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../vendor/press-start-2p/press-start-2p.ttf") format("truetype");
+}
+
+/* Classes keep HTML free of inline styles under the strict browser policy. */
+.ext-icon-snack { background: #2c2c32; }
+.tree-row.scm-deleted { color: #f14c4c; }
+.scm-deleted-label { margin-left: auto; padding-right: 10px; }
+.pane-empty.scm-empty { padding-left: 20px; }
+.search-hit { padding: 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search-hit-line, .palette-empty { color: var(--fg-dim); }
+.search-summary { margin-bottom: 4px; }
+
 :root {
   --font-ui: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif;
   --font-mono: Menlo, Monaco, "Courier New", monospace;

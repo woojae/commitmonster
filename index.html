@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; font-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>commitmonster — Visual Studio Code</title>
   <meta name="description" content="A furry blue monster eats your codebase, one character at a time, inside a Visual Studio Code lookalike.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%232b7de9'/%3E%3Ccircle cx='23' cy='22' r='9' fill='%23fff'/%3E%3Ccircle cx='41' cy='22' r='9' fill='%23fff'/%3E%3Ccircle cx='25' cy='24' r='4' fill='%23111'/%3E%3Ccircle cx='39' cy='24' r='4' fill='%23111'/%3E%3Cpath d='M12 40 Q32 62 52 40 Z' fill='%2312070c'/%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.36/dist/codicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/codicons/codicon.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -111,7 +110,7 @@
       </div>
 
       <div class="sidebar-view" data-view="scm" hidden>
-        <div class="scm-input"><input type="text" placeholder="Message (⌘Enter to commit on 'main')" id="scm-message"><button type="button" class="btn btn-primary btn-block" id="scm-commit"><i class="codicon codicon-check"></i> Commit</button></div>
+        <div class="scm-input"><input type="text" placeholder="Message (⌘Enter to commit on 'main')" id="scm-message" maxlength="1000"><button type="button" class="btn btn-primary btn-block" id="scm-commit"><i class="codicon codicon-check"></i> Commit</button></div>
         <section class="pane is-open">
           <header class="pane-header"><i class="codicon codicon-chevron-down"></i><span>Changes</span><span class="pane-count" id="scm-count">0</span></header>
           <div class="pane-body"><ul class="tree" id="scm-list"></ul></div>
@@ -141,8 +140,8 @@
         <div class="search-box"><input type="text" placeholder="Search Extensions in Marketplace"><i class="codicon codicon-filter"></i></div>
         <ul class="ext-list">
           <li class="ext"><div class="ext-icon ext-icon-monster"></div><div><div class="ext-name">Commit Monster <span class="ext-ver">v1.0.0</span></div><div class="ext-desc">Eats your codebase. Never full.</div><div class="ext-pub">woojae <span class="ext-installed">Installed</span></div></div></li>
-          <li class="ext"><div class="ext-icon" style="background:#2c2c32">🍪</div><div><div class="ext-name">Cookie Jar <span class="ext-ver">v0.4.2</span></div><div class="ext-desc">Adds cookies to the status bar. Purely decorative.</div><div class="ext-pub">snackworks <button type="button" class="btn btn-tiny">Install</button></div></div></li>
-          <li class="ext"><div class="ext-icon" style="background:#2c2c32">🪲</div><div><div class="ext-name">Bug Seasoning <span class="ext-ver">v2.1.0</span></div><div class="ext-desc">Sprinkles TODOs on your code so it tastes better.</div><div class="ext-pub">snackworks <button type="button" class="btn btn-tiny">Install</button></div></div></li>
+          <li class="ext"><div class="ext-icon ext-icon-snack">🍪</div><div><div class="ext-name">Cookie Jar <span class="ext-ver">v0.4.2</span></div><div class="ext-desc">Adds cookies to the status bar. Purely decorative.</div><div class="ext-pub">snackworks <button type="button" class="btn btn-tiny">Install</button></div></div></li>
+          <li class="ext"><div class="ext-icon ext-icon-snack">🪲</div><div><div class="ext-name">Bug Seasoning <span class="ext-ver">v2.1.0</span></div><div class="ext-desc">Sprinkles TODOs on your code so it tastes better.</div><div class="ext-pub">snackworks <button type="button" class="btn btn-tiny">Install</button></div></div></li>
         </ul>
       </div>
     </aside>
@@ -167,7 +166,7 @@
 
         <div class="editor-text" id="editor-text" hidden>
           <div class="text-gutter" id="text-gutter"></div>
-          <textarea id="cm-input" spellcheck="false" placeholder="// paste your own code here, then press Feed Me"></textarea>
+          <textarea id="cm-input" spellcheck="false" maxlength="50000" aria-label="Your code (up to 50,000 characters)" placeholder="// paste your own code here (up to 50,000 characters), then press Feed Me"></textarea>
         </div>
 
         <div class="editor-readme" id="editor-readme" hidden>
