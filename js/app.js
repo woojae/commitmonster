@@ -77,6 +77,10 @@
   const outlineText = $('outline-text');
   const searchInput = $('search-input');
   const searchResults = $('search-results');
+  const extList = $('ext-list');
+  const extSearch = $('ext-search');
+  const editorExt = $('editor-ext');
+  const stCookies = $('st-cookies');
 
   // ---- Flavor -------------------------------------------------------------
 
@@ -353,6 +357,87 @@
     lastPos: '',
   };
 
+  // ---- Extensions ---------------------------------------------------------
+
+  const EXTENSIONS = [
+    {
+      id: 'monster', name: 'Commit Monster', ver: '1.0.0', pub: 'woojae', icon: 'monster', builtin: true,
+      desc: 'Eats your codebase. Never full.',
+      downloads: '1', stars: 5,
+      details: `<h2>Features</h2><ul>
+        <li>Eats C, Go, Python, JavaScript, Rust and whatever you paste into <code>my-code.txt</code>.</li>
+        <li>Resolves every TODO, FIXME and HACK by ingestion.</li>
+        <li>Commits straight to <code>main</code>. Code review is skipped, on principle.</li>
+        <li>Never full. Not once. Not ever.</li></ul>
+        <h2>Uninstalling</h2><p>No. He lives here now.</p>`,
+    },
+    {
+      id: 'cookies', name: 'Cookie Jar', ver: '0.4.2', pub: 'snackworks', icon: '🍪',
+      desc: 'Adds cookies to the status bar. Purely decorative.',
+      downloads: '1,204,551', stars: 5,
+      details: `<h2>What it does</h2><p>Puts a cookie jar in the status bar. Every 8 lines he eats, a cookie goes in the jar.</p>
+        <h2>Feeding him a cookie</h2><p>Click the jar. While he is eating, a cookie sends him into a frenzy. While he is resting, it makes him hungrier. Either way it is gone.</p>
+        <p>The jar remembers its cookies between visits. He does not remember eating them.</p>`,
+    },
+    {
+      id: 'seasoning', name: 'Bug Seasoning', ver: '2.1.0', pub: 'snackworks', icon: '🪲',
+      desc: 'Sprinkles TODOs on your code so it tastes better.',
+      downloads: '88,201', stars: 4,
+      details: `<h2>What it does</h2><p>Sprinkles <code>TODO</code>, <code>FIXME</code> and <code>HACK</code> comments over every snack before he eats it. More bugs in, more bugs resolved.</p>
+        <h2>Side effects</h2><ul><li>The Problems panel looks busier.</li><li>The bug counter goes up faster.</li><li>He feels accomplished.</li></ul>
+        <p>Applies the next time a file is loaded. A meal already in progress is left alone.</p>`,
+    },
+  ];
+  const extById = Object.fromEntries(EXTENSIONS.map((e) => [e.id, e]));
+  const STORE_EXT = 'commitmonster.extensions';
+  const STORE_COOKIES = 'commitmonster.cookies';
+
+  function loadStore(key, fallback) {
+    try {
+      const v = JSON.parse(localStorage.getItem(key));
+      return v === null || v === undefined ? fallback : v;
+    } catch (e) { return fallback; }
+  }
+
+  function saveStore(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* private mode, quota, etc. */ }
+  }
+
+  const installed = new Set(['monster']);
+  for (const id of loadStore(STORE_EXT, [])) if (extById[id]) installed.add(id);
+  let cookies = Math.max(0, Math.min(999, Number(loadStore(STORE_COOKIES, 0)) || 0));
+
+  const SEASONING = [
+    'TODO: remove before shipping', 'FIXME: works on my machine', 'HACK: do not touch. do not ask.',
+    'XXX: temporary fix (2014)', 'BUG: off by one. or two.', 'TODO: write tests, someday',
+    'FIXME: not thread safe. not safe at all.', 'HACK: copied from a forum, unclear which',
+    'TODO: ask someone who knows', 'FIXME: this should never happen (it happens)',
+  ];
+
+  // Sprinkle comment lines through the source so he has more bugs to eat.
+  function season(source, lang) {
+    const prefix = lang === 'Python' ? '# ' : '// ';
+    const lines = source.split('\n');
+    const out = [];
+    let since = 0;
+    let last = -1;
+    let gap = 5 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < lines.length; i++) {
+      out.push(lines[i]);
+      since += 1;
+      if (since < gap || lines[i].trim() === '') continue;
+      const next = lines[i + 1] || '';
+      const indent = (next.trim() ? next : lines[i]).match(/^\s*/)[0];
+      let pick = Math.floor(Math.random() * (SEASONING.length - 1));
+      if (pick >= last) pick += 1;
+      last = pick;
+      out.push(indent + prefix + SEASONING[pick]);
+      since = 0;
+      gap = 5 + Math.floor(Math.random() * 6);
+    }
+    return out.join('\n');
+  }
+
   let mmCanvas = null;
   let mmCtx = null;
 
@@ -580,6 +665,7 @@
         if (cur.text.trim() !== '') {
           state.stats.lines += 1;
           pendingLog.lines += 1;
+          if (installed.has('cookies') && state.stats.lines % 8 === 0) addCookie();
         }
         if (cur.bug) {
           state.stats.bugs += 1;
@@ -963,13 +1049,20 @@
 
   // ---- Files, tabs, views -------------------------------------------------
 
+  function extIdOf(id) {
+    return typeof id === 'string' && id.startsWith('ext:') && extById[id.slice(4)] ? id.slice(4) : null;
+  }
+
   function fileName(id) {
     if (id === 'readme') return 'README.md';
+    const ext = extIdOf(id);
+    if (ext) return `Extension: ${extById[ext].name}`;
     return byId[id] ? byId[id].file : 'nothing';
   }
 
   function fileIcon(id) {
     if (id === 'readme') return '<span class="file-icon fi-md">i</span>';
+    if (extIdOf(id)) return '<span class="file-icon fi-ext"><i class="codicon codicon-extensions"></i></span>';
     const s = byId[id];
     return `<span class="file-icon fi-${s.icon}">${s.icon.toUpperCase()}</span>`;
   }
@@ -984,6 +1077,7 @@
     }).join('');
     const readme = fileTree.querySelector('[data-file="readme"]');
     readme.classList.toggle('is-active', ui.activeId === 'readme');
+    renderExtensions();
   }
 
   function renderTabs() {
@@ -1010,6 +1104,10 @@
     } else if (id === 'readme') {
       editorReadme.hidden = false;
       crumbFile.textContent = 'README.md';
+    } else if (extIdOf(id)) {
+      editorExt.hidden = false;
+      renderExtPage(extIdOf(id));
+      crumbFile.textContent = fileName(id);
     } else if (id === 'own' && state.fileId !== 'own') {
       editorText.hidden = false;
       updateTextGutter();
@@ -1020,11 +1118,11 @@
       crumbFile.textContent = fileName(id);
     }
     const snack = byId[id];
-    stLang.textContent = id === 'readme' ? 'Markdown' : snack ? snack.lang : 'Plain Text';
+    stLang.textContent = id === 'readme' ? 'Markdown' : extIdOf(id) ? 'Extension' : snack ? snack.lang : 'Plain Text';
   }
 
   function openFile(id, opts = {}) {
-    if (typeof id !== 'string' || (id !== 'readme' && !Object.hasOwn(byId, id))) return;
+    if (typeof id !== 'string' || (id !== 'readme' && !extIdOf(id) && !Object.hasOwn(byId, id))) return;
     if (!ui.openTabs.includes(id)) ui.openTabs.push(id);
     ui.activeId = id;
     const isSnack = !!byId[id];
@@ -1075,6 +1173,7 @@
       limitInput();
       source = input.value.trim() ? input.value : '// me see empty jar. me sad.\n// paste code and try again';
     }
+    if (installed.has('seasoning')) source = season(source, snack.lang);
     state.fileId = id;
     reset(source);
     ui.overlayHidden = false;
@@ -1406,6 +1505,151 @@
       : 'No results found. Maybe he ate it.';
   }
 
+  // ---- Extensions view ----------------------------------------------------
+
+  function extSlug(e) {
+    return `${e.pub}.${e.name.toLowerCase().replace(/\s+/g, '-')}`;
+  }
+
+  function extIconHtml(e, cls = '') {
+    return e.icon === 'monster'
+      ? `<div class="ext-icon ext-icon-monster ${cls}"></div>`
+      : `<div class="ext-icon ext-icon-snack ${cls}">${e.icon}</div>`;
+  }
+
+  function extActionHtml(e, cls) {
+    if (e.builtin) return '<span class="ext-installed">Installed</span>';
+    return installed.has(e.id)
+      ? `<button type="button" class="btn ${cls} btn-uninstall" data-ext-toggle="${e.id}">Uninstall</button>`
+      : `<button type="button" class="btn ${cls} btn-primary" data-ext-toggle="${e.id}">Install</button>`;
+  }
+
+  function renderExtensions() {
+    const q = extSearch.value.trim().toLowerCase();
+    const shown = EXTENSIONS.filter((e) => !q || `${e.name} ${e.desc} ${e.pub}`.toLowerCase().includes(q));
+    extList.innerHTML = shown.length
+      ? shown.map((e) => {
+        const cls = ['ext'];
+        if (ui.activeId === `ext:${e.id}`) cls.push('is-active');
+        return `<li class="${cls.join(' ')}" data-ext="${e.id}">${extIconHtml(e)}<div><div class="ext-name">${esc(e.name)} <span class="ext-ver">v${e.ver}</span></div><div class="ext-desc">${esc(e.desc)}</div><div class="ext-pub">${esc(e.pub)} ${extActionHtml(e, 'btn-tiny')}</div></div></li>`;
+      }).join('')
+      : '<li class="ext-empty">No extensions found. He may have eaten them.</li>';
+  }
+
+  function renderExtPage(id) {
+    const e = extById[id];
+    if (!e) return;
+    const stars = '★'.repeat(e.stars) + '☆'.repeat(5 - e.stars);
+    editorExt.innerHTML = `<div class="ext-page">
+      <header class="ext-page-head">${extIconHtml(e)}<div>
+        <h1>${esc(e.name)}<span class="ext-ver">v${e.ver}</span></h1>
+        <div class="ext-page-meta"><span>${esc(e.pub)}</span><span>|</span><span><i class="codicon codicon-cloud-download"></i> ${e.downloads}</span><span>|</span><span class="ext-stars">${stars}</span><span>(${e.stars})</span></div>
+        <p class="ext-page-desc">${esc(e.desc)}</p>
+        <div class="ext-page-actions">${extActionHtml(e, '')}</div>
+      </div></header>
+      ${e.details}
+    </div>`;
+  }
+
+  function refreshExtensions() {
+    renderExtensions();
+    if (extIdOf(ui.activeId)) renderExtPage(extIdOf(ui.activeId));
+  }
+
+  function toggleExtension(id) {
+    const e = extById[id];
+    if (!e) return;
+    if (e.builtin) {
+      showToast('<b>Commit Monster</b> cannot be uninstalled. He ate the uninstaller.', { kind: 'warning' });
+      return;
+    }
+    if (installed.has(id)) uninstallExtension(e);
+    else installExtension(e);
+    saveStore(STORE_EXT, [...installed].filter((x) => !extById[x].builtin));
+    refreshExtensions();
+  }
+
+  function installExtension(e) {
+    installed.add(e.id);
+    tcmd(`code --install-extension ${extSlug(e)}`);
+    tlog(`Installing extension '${esc(extSlug(e))}'...`);
+    tlog(`Extension '${esc(extSlug(e))}' v${e.ver} was successfully installed.`);
+    newPrompt();
+    outLog(`[Extensions] ${e.name} v${e.ver} activated.`);
+    addTimeline(`Installed ${e.name}`);
+    if (e.id === 'cookies') {
+      syncCookies();
+      showToast(`<b>Cookie Jar</b> installed. A jar is in the status bar. He gets a cookie every 8 lines. Click it to give him one.`);
+    } else if (e.id === 'seasoning') {
+      const reloaded = reseason();
+      showToast(`<b>Bug Seasoning</b> installed. ${reloaded ? 'The current snack has been seasoned. Check the Problems panel.' : 'The next snack he loads will be seasoned.'}`, {
+        actions: [{ label: 'Problems', run: () => showPanel('problems') }],
+      });
+    } else {
+      showToast(`<b>${esc(e.name)}</b> installed. It was delicious.`);
+    }
+  }
+
+  function uninstallExtension(e) {
+    installed.delete(e.id);
+    tcmd(`code --uninstall-extension ${extSlug(e)}`);
+    tlog(`Extension '${esc(extSlug(e))}' was successfully uninstalled.`);
+    newPrompt();
+    outLog(`[Extensions] ${e.name} deactivated.`);
+    addTimeline(`Uninstalled ${e.name}`);
+    if (e.id === 'cookies') {
+      syncCookies();
+      showToast(`<b>Cookie Jar</b> uninstalled. The jar is gone. The cookies are safe.`);
+    } else if (e.id === 'seasoning') {
+      const reloaded = reseason();
+      showToast(`<b>Bug Seasoning</b> uninstalled. ${reloaded ? 'The current snack is plain again.' : 'The next snack he loads will be plain.'}`);
+    } else {
+      showToast(`<b>${esc(e.name)}</b> uninstalled.`);
+    }
+  }
+
+  // Reload the current snack so seasoning takes effect, unless he is mid-meal.
+  function reseason() {
+    if (!state.fileId || state.running || state.paused || state.done) return false;
+    loadFile(state.fileId);
+    renderEditorView();
+    return true;
+  }
+
+  function syncCookies() {
+    stCookies.hidden = !installed.has('cookies');
+    stCookies.textContent = `🍪 ×${cookies}`;
+    stCookies.title = `Cookie Jar: ${cookies} cookie${cookies === 1 ? '' : 's'}. Click to give him one.`;
+    saveStore(STORE_COOKIES, cookies);
+  }
+
+  function addCookie() {
+    if (cookies >= 999) return;
+    cookies += 1;
+    syncCookies();
+  }
+
+  function eatCookie() {
+    if (!installed.has('cookies')) return;
+    if (cookies <= 0) {
+      say('JAR EMPTY. ME SAD', 1400);
+      showToast('The cookie jar is empty. He gets a cookie every 8 lines he eats.', { kind: 'warning' });
+      return;
+    }
+    cookies -= 1;
+    syncCookies();
+    playNom(1.6);
+    tlog(`<span class="t-nom">monster:</span> COOKIE!!! <span class="t-dim">(${cookies} left)</span>`);
+    if (state.running) {
+      frenzy();
+      say('COOKIE!!!', 1400);
+    } else {
+      say('COOKIE!!!', 1400);
+      setHunger(1);
+      showToast(`He ate a cookie. Hunger is now ${speedInput.value}. ${cookies} left in the jar.`);
+    }
+  }
+
   // ---- Toasts -------------------------------------------------------------
 
   function showToast(html, opts = {}) {
@@ -1449,6 +1693,9 @@
       { label: 'View: Show Source Control', hint: '⌃⇧G', icon: 'source-control', run: () => switchView('scm') },
       { label: 'View: Show Run and Debug', hint: '⇧⌘D', icon: 'debug-alt', run: () => switchView('debug') },
       { label: 'View: Show Extensions', hint: '⇧⌘X', icon: 'extensions', run: () => switchView('extensions') },
+      ...EXTENSIONS.filter((e) => !e.builtin).map((e) => ({
+        label: `Extensions: ${installed.has(e.id) ? 'Uninstall' : 'Install'} ${e.name}`, icon: 'extensions', run: () => toggleExtension(e.id),
+      })),
       { label: 'Preferences: Color Theme', icon: 'color-mode', run: () => showToast('Dark+ (default dark). He only eats in the dark.') },
       { label: 'Help: About', icon: 'info', run: about },
       { label: 'Help: Open README', icon: 'book', run: () => openFile('readme') },
@@ -1570,7 +1817,18 @@
   $('scm-commit').addEventListener('click', commit);
   $('scm-message').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) commit(); });
   searchInput.addEventListener('input', updateSearch);
-  document.querySelectorAll('.btn-tiny').forEach((b) => b.addEventListener('click', () => showToast('Extension installed. It was delicious.')));
+  extSearch.addEventListener('input', renderExtensions);
+  extList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-ext-toggle]');
+    if (btn) { toggleExtension(btn.dataset.extToggle); return; }
+    const row = e.target.closest('[data-ext]');
+    if (row) openFile(`ext:${row.dataset.ext}`);
+  });
+  editorExt.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-ext-toggle]');
+    if (btn) toggleExtension(btn.dataset.extToggle);
+  });
+  stCookies.addEventListener('click', eatCookie);
 
   document.querySelectorAll('.menubar [data-menu]').forEach((b) => {
     b.addEventListener('click', () => {
@@ -1631,6 +1889,7 @@
     fitAvatar();
     fitCanvas();
     syncHunger();
+    syncCookies();
     newPrompt();
     renderScm();
     if (DEFAULT_ID) {
@@ -1648,6 +1907,9 @@
   // Small console API for people who like to poke things: CommitMonster.feed()
   window.CommitMonster = {
     feed, pause, resume, frenzy, openFile, commit,
+    install: (id) => { if (extById[id] && !installed.has(id)) toggleExtension(id); },
+    uninstall: (id) => { if (installed.has(id)) toggleExtension(id); },
+    get extensions() { return EXTENSIONS.map((e) => ({ id: e.id, name: e.name, installed: installed.has(e.id) })); },
     tick: (seconds = 1) => { if (state.running) step(seconds); },
     get state() { return state; },
   };
