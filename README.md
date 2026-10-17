@@ -26,6 +26,8 @@ Then visit http://localhost:8000.
   Redis, curl, Go, CPython, React and Rust; each carries its license in its
   header comment.
 - `js/app.js` — the monster, the canvas editor, and all the workbench wiring.
+- `js/muncher.js` — Commit Muncher, the maze game behind `muncher.game` in
+  the Explorer (see below).
 - `vendor/` — pinned local copies of the Codicons and Press Start 2P fonts, so
   the page loads nothing from third-party hosts (see `vendor/README.md`).
 
@@ -41,6 +43,22 @@ Then visit http://localhost:8000.
 | Toggle side bar / panel | `⌘B` / `⌘J` |
 | Your own code | Open `my-code.txt`, paste, press Feed Me |
 | Extensions | `⇧⌘X`, search the list, click a row for details, Install / Uninstall |
+| Play Commit Muncher | Open `muncher.game` in the Explorer, or `Commit Muncher: Play` in the palette |
+
+## Commit Muncher
+
+`muncher.game` is a Pac-Man-style arcade game starring the monster. He runs the
+classic maze, drawn as an editor-blue neon outline. Pellets are syntax-colored
+code glyphs, power pellets are cookies, and the four chasers are bugs:
+NullPointer, RaceCondition, OffByOne and MemoryLeak, each with the classic
+scatter/chase personality. Eat a cookie and the bugs become edible for a few
+seconds; eaten bugs return to their house as eyes. A "PR" merge badge appears
+twice a level as a bonus, and there is an extra life at 10,000.
+
+Arrows or `WASD` to move, `P` or `Esc` to pause, swipe or the on-screen d-pad
+on touch. The game pauses when you switch tabs. Your best score is kept in
+`localStorage`; nothing leaves the page. Eating bugs, clearing a maze and
+losing all show up in the terminal and the Timeline.
 
 ## Extensions
 
@@ -56,5 +74,6 @@ The Extensions view is a tiny marketplace. Installs are remembered in
 - **Commit Monster** cannot be uninstalled. He ate the uninstaller.
 
 A small console API is exposed as `window.CommitMonster` (`feed`, `pause`,
-`resume`, `frenzy`, `openFile`, `commit`, `tick`, `install`, `uninstall`,
-`extensions`).
+`resume`, `frenzy`, `openFile`, `commit`, `play`, `tick`, `install`,
+`uninstall`, `extensions`). The game has its own as `window.CommitMuncher`
+(`start`, `pause`, `toggle`, `playing`, `score`).
