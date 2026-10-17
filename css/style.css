@@ -333,6 +333,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
 .fi-rs { background: #dea584; color: #3a1c08; }
 .fi-txt { background: #7a7a7a; }
 .fi-md { background: #519aba; }
+.fi-game { background: #2b7de9; }
+.fi-game .codicon { font-size: 11px; }
 
 .timeline { list-style: none; margin: 0; padding: 2px 0 6px; font-size: 12px; }
 .timeline li { padding: 2px 20px; display: flex; gap: 8px; color: var(--fg); }
@@ -768,4 +770,95 @@ kbd {
   .status-right .status-item:nth-child(2),
   .status-right .status-item:nth-child(3),
   .status-right .status-item:nth-child(4) { display: none; }
+}
+
+/* Commit Muncher (muncher.game): the maze lives in the editor area */
+.editor-game {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--editor);
+}
+.editor-game[hidden] { display: none; }
+.game-hud {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 36px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--fg-dim);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.game-stat { display: inline-flex; align-items: baseline; gap: 6px; }
+.game-stat-label { text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; }
+.game-stat-value { font-family: var(--font-pixel); font-size: 10px; color: #c98a3e; }
+.game-hud-spacer { flex: 1; }
+.game-help { font-size: 11px; }
+.game-hud .btn-tiny { margin-left: 0; }
+.game-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+.game-frame {
+  position: relative;
+  height: 100%;
+  max-width: 100%;
+  aspect-ratio: 560 / 656;
+  border: 1px solid rgba(43, 125, 233, 0.35);
+  border-radius: 4px;
+  background: #1a1d27;
+  overflow: hidden;
+}
+#mz-screen {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.game-overlay { background: rgba(16, 19, 25, 0.86); }
+.game-overlay .dialog { max-width: 360px; }
+.game-pad {
+  flex: none;
+  display: none;
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows: repeat(3, 40px);
+  gap: 4px;
+  justify-content: center;
+  padding: 6px 0 10px;
+}
+.game-pad-btn {
+  background: #3a3d41;
+  color: var(--fg-bright);
+  border: 0;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.game-pad-btn:active { background: var(--accent); }
+.game-pad-up { grid-column: 2; grid-row: 1; }
+.game-pad-left { grid-column: 1; grid-row: 2; }
+.game-pad-down { grid-column: 2; grid-row: 3; }
+.game-pad-right { grid-column: 3; grid-row: 2; }
+@media (hover: none) and (pointer: coarse) {
+  .game-pad { display: grid; }
+  .game-help { display: none; }
+}
+@media (max-width: 720px) {
+  .game-hud { gap: 10px; padding: 0 8px; }
+  .game-help { display: none; }
+  .game-stage { padding: 6px; }
 }

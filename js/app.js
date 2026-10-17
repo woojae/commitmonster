@@ -9,6 +9,8 @@
   const SNACKS = window.SNACKS || [];
   const byId = Object.fromEntries(SNACKS.map((s) => [s.id, s]));
   const DEFAULT_ID = SNACKS[0] ? SNACKS[0].id : null;
+  const GAME_ID = 'game';          // muncher.game, the maze in js/muncher.js
+  const GAME_FILE = 'muncher.game';
   const MAX_SOURCE_LENGTH = 50000;
   const MAX_DISPLAY_LINES = 600;
   const MAX_LOG_LENGTH = 20000;
@@ -81,6 +83,9 @@
   const extSearch = $('ext-search');
   const editorExt = $('editor-ext');
   const stCookies = $('st-cookies');
+  const editorGame = $('editor-game');
+  const stGame = $('st-game');
+  const stGameScore = $('st-game-score');
 
   // ---- Flavor -------------------------------------------------------------
 
@@ -1055,6 +1060,7 @@
 
   function fileName(id) {
     if (id === 'readme') return 'README.md';
+    if (id === GAME_ID) return GAME_FILE;
     const ext = extIdOf(id);
     if (ext) return `Extension: ${extById[ext].name}`;
     return byId[id] ? byId[id].file : 'nothing';
@@ -1062,6 +1068,7 @@
 
   function fileIcon(id) {
     if (id === 'readme') return '<span class="file-icon fi-md">i</span>';
+    if (id === GAME_ID) return '<span class="file-icon fi-game"><i class="codicon codicon-game"></i></span>';
     if (extIdOf(id)) return '<span class="file-icon fi-ext"><i class="codicon codicon-extensions"></i></span>';
     const s = byId[id];
     return `<span class="file-icon fi-${s.icon}">${s.icon.toUpperCase()}</span>`;
@@ -1077,6 +1084,8 @@
     }).join('');
     const readme = fileTree.querySelector('[data-file="readme"]');
     readme.classList.toggle('is-active', ui.activeId === 'readme');
+    const gameItem = fileTree.querySelector(`[data-file="${GAME_ID}"]`);
+    if (gameItem) gameItem.classList.toggle('is-active', ui.activeId === GAME_ID);
     renderExtensions();
   }
 
@@ -1097,6 +1106,8 @@
     editorEmpty.hidden = true;
     editorText.hidden = true;
     editorReadme.hidden = true;
+    editorExt.hidden = true;
+    editorGame.hidden = true;
     overlay.hidden = true;
     if (!id) {
       editorEmpty.hidden = false;
@@ -1104,6 +1115,9 @@
     } else if (id === 'readme') {
       editorReadme.hidden = false;
       crumbFile.textContent = 'README.md';
+    } else if (id === GAME_ID) {
+      editorGame.hidden = false;
+      crumbFile.textContent = GAME_FILE;
     } else if (extIdOf(id)) {
       editorExt.hidden = false;
       renderExtPage(extIdOf(id));
@@ -1118,11 +1132,12 @@
       crumbFile.textContent = fileName(id);
     }
     const snack = byId[id];
-    stLang.textContent = id === 'readme' ? 'Markdown' : extIdOf(id) ? 'Extension' : snack ? snack.lang : 'Plain Text';
+    stLang.textContent = id === 'readme' ? 'Markdown' : id === GAME_ID ? 'Game' : extIdOf(id) ? 'Extension' : snack ? snack.lang : 'Plain Text';
+    if (window.CommitMuncher) window.CommitMuncher.setVisible(id === GAME_ID);
   }
 
   function openFile(id, opts = {}) {
-    if (typeof id !== 'string' || (id !== 'readme' && !extIdOf(id) && !Object.hasOwn(byId, id))) return;
+    if (typeof id !== 'string' || (id !== 'readme' && id !== GAME_ID && !extIdOf(id) && !Object.hasOwn(byId, id))) return;
     if (!ui.openTabs.includes(id)) ui.openTabs.push(id);
     ui.activeId = id;
     const isSnack = !!byId[id];
@@ -1213,7 +1228,7 @@
     if (state.running) { pause(); return; }
     if (state.paused) { resume(); return; }
     let id = ui.activeId;
-    if (!id || id === 'readme') {
+    if (!id || !byId[id]) { // README, an extension page or the game: feed him the default snack
       id = DEFAULT_ID;
       openFile(id);
     }
@@ -1684,6 +1699,8 @@
       { label: 'Commit Monster: Hunger Up', icon: 'arrow-up', run: () => setHunger(1) },
       { label: 'Commit Monster: Hunger Down', icon: 'arrow-down', run: () => setHunger(-1) },
       { label: 'Commit Monster: Feed Him My Own Code', icon: 'edit', run: () => openFile('own', { fromExplorer: true }) },
+      { label: 'Commit Muncher: Play', hint: GAME_FILE, icon: 'game', run: playGame },
+      { label: 'Commit Muncher: Pause / Resume', hint: 'P', icon: 'debug-pause', run: () => { if (ui.activeId === GAME_ID && window.CommitMuncher) window.CommitMuncher.toggle(); else playGame(); } },
       { label: 'Git: Commit', icon: 'git-commit', run: () => { switchView('scm'); commit(); } },
       { label: 'View: Toggle Primary Side Bar', hint: '⌘B', icon: 'layout-sidebar-left', run: toggleSidebar },
       { label: 'View: Toggle Panel', hint: '⌘J', icon: 'layout-panel', run: togglePanel },
@@ -1703,6 +1720,7 @@
     for (const s of SNACKS) {
       list.push({ label: `snacks/${s.file}`, hint: s.lang, icon: 'file', file: true, run: () => openFile(s.id, { fromExplorer: true }) });
     }
+    list.push({ label: GAME_FILE, hint: 'Game', icon: 'game', file: true, run: () => openFile(GAME_ID) });
     list.push({ label: 'README.md', hint: 'Markdown', icon: 'file', file: true, run: () => openFile('readme') });
     return list;
   }
@@ -1871,6 +1889,7 @@
     if (mod && e.shiftKey && key === 'd') { e.preventDefault(); switchView('debug'); return; }
     const tag = e.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (ui.activeId === GAME_ID && window.CommitMuncher && window.CommitMuncher.key(e)) return;
     if (e.key === ' ' || (e.key === 'Enter' && tag !== 'BUTTON')) {
       e.preventDefault();
       if (state.running) frenzy();
@@ -1882,6 +1901,38 @@
 
   if (window.ResizeObserver) new ResizeObserver(fitCanvas).observe(editorEl);
   else window.addEventListener('resize', fitCanvas);
+
+  // ---- Commit Muncher bridge ------------------------------------------------
+
+  function playGame() {
+    openFile(GAME_ID);
+    if (window.CommitMuncher) window.CommitMuncher.start();
+  }
+
+  document.addEventListener('commitmuncher', (e) => {
+    const { type, data } = e.detail || {};
+    if (type === 'score') {
+      stGameScore.textContent = data;
+      stGame.hidden = false;
+    } else if (type === 'start') {
+      stGameScore.textContent = '0';
+      stGame.hidden = false;
+      tcmd(`monster play ${GAME_FILE}`);
+      tlog(`<span class="t-dim">info</span> maze loaded. ${data.glyphs} glyphs, 4 cookies, ${data.bugs} bugs. yum.`);
+      outLog(`[Commit Muncher] he is loose in the maze.`);
+      addTimeline(`Let the monster loose in ${GAME_FILE}`);
+    } else if (type === 'bug') {
+      tlog(`<span class="t-nom">monster:</span> fixed ${esc(data.name)} (+${data.points})`);
+    } else if (type === 'level') {
+      tlog(`<span class="t-dim">info</span> maze cleared. level ${data.level}. ME EAT WHOLE REPO.`);
+      addTimeline(`Cleared maze level ${data.level - 1}`);
+    } else if (type === 'over') {
+      tlog(`<span class="t-err">exit 1</span>  the bugs win. score ${data.score}, level ${data.level}, ${data.bugsFixed} bugs fixed.`);
+      newPrompt();
+      outLog(`[Commit Muncher] game over at ${data.score} points.`);
+      addTimeline(`Lost to the bugs with ${data.score} points`);
+    }
+  });
 
   // ---- Boot ---------------------------------------------------------------
 
@@ -1907,6 +1958,7 @@
   // Small console API for people who like to poke things: CommitMonster.feed()
   window.CommitMonster = {
     feed, pause, resume, frenzy, openFile, commit,
+    play: playGame,
     install: (id) => { if (extById[id] && !installed.has(id)) toggleExtension(id); },
     uninstall: (id) => { if (installed.has(id)) toggleExtension(id); },
     get extensions() { return EXTENSIONS.map((e) => ({ id: e.id, name: e.name, installed: installed.has(e.id) })); },

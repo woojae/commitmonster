@@ -89,6 +89,7 @@
               <li class="tree-folder is-open" role="treeitem"><span class="tree-row"><i class="codicon codicon-chevron-down"></i><i class="codicon codicon-folder-opened folder-icon"></i>snacks</span>
                 <ul id="file-list"></ul>
               </li>
+              <li class="tree-item" role="treeitem" data-file="game"><span class="tree-row"><span class="file-icon fi-game"><i class="codicon codicon-game"></i></span>muncher.game</span></li>
               <li class="tree-item" role="treeitem" data-file="readme"><span class="tree-row"><span class="file-icon fi-md">i</span>README.md</span></li>
             </ul>
           </div>
@@ -167,6 +168,38 @@
 
         <div class="editor-readme editor-ext" id="editor-ext" hidden></div>
 
+        <div class="editor-game" id="editor-game" hidden>
+          <div class="game-hud">
+            <span class="game-stat"><span class="game-stat-label">Score</span><span class="game-stat-value" id="mz-score">0</span></span>
+            <span class="game-stat"><span class="game-stat-label">Best</span><span class="game-stat-value" id="mz-best">0</span></span>
+            <span class="game-stat"><span class="game-stat-label">Level</span><span class="game-stat-value" id="mz-level">1</span></span>
+            <span class="game-stat"><span class="game-stat-label">Bugs fixed</span><span class="game-stat-value" id="mz-bugs">0</span></span>
+            <span class="game-hud-spacer"></span>
+            <span class="game-help">arrows / wasd move &middot; p pause</span>
+            <button type="button" class="btn btn-tiny" id="mz-toggle">Play</button>
+          </div>
+          <div class="game-stage">
+            <div class="game-frame">
+              <canvas id="mz-screen" width="560" height="656" aria-label="Commit Muncher maze"></canvas>
+              <div class="overlay game-overlay" id="mz-overlay">
+                <div class="dialog">
+                  <div class="dialog-title" id="mz-overlay-title">ME WANT CODE</div>
+                  <p class="dialog-msg" id="mz-overlay-msg">eat every glyph in the repo. cookies make the bugs edible.<br>arrows or wasd to move, p to pause</p>
+                  <div class="dialog-actions">
+                    <button type="button" class="btn btn-primary" id="mz-start">Feed Me</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="game-pad" aria-label="Touch controls">
+            <button type="button" class="game-pad-btn game-pad-up" data-dir="up" aria-label="Up"><i class="codicon codicon-arrow-up"></i></button>
+            <button type="button" class="game-pad-btn game-pad-left" data-dir="left" aria-label="Left"><i class="codicon codicon-arrow-left"></i></button>
+            <button type="button" class="game-pad-btn game-pad-down" data-dir="down" aria-label="Down"><i class="codicon codicon-arrow-down"></i></button>
+            <button type="button" class="game-pad-btn game-pad-right" data-dir="right" aria-label="Right"><i class="codicon codicon-arrow-right"></i></button>
+          </div>
+        </div>
+
         <div class="editor-readme" id="editor-readme" hidden>
           <h1>Commit Monster</h1>
           <p>A furry blue monster who has never once been full. Point him at a file and he eats it, one character at a time, crumbs and all.</p>
@@ -179,6 +212,8 @@
           </ol>
           <h2>Feeding him your own code</h2>
           <p>Open <b>my-code.txt</b>, paste anything, and press Feed Me. He is not picky.</p>
+          <h2>Arcade</h2>
+          <p>Open <b>muncher.game</b> to let him loose in a maze made of code. Eat every glyph, dodge the four bugs (NullPointer, RaceCondition, OffByOne, MemoryLeak), and grab a cookie to make them edible for a few seconds. Arrows or <kbd>WASD</kbd> to move, <kbd>P</kbd> to pause.</p>
           <h2>Known issues</h2>
           <ul>
             <li>Tech debt goes to zero, but so does the codebase.</li>
@@ -228,6 +263,7 @@
         <span class="status-item">UTF-8</span>
         <span class="status-item">LF</span>
         <span class="status-item" id="st-lang">C</span>
+        <span class="status-item" id="st-game" title="Commit Muncher" hidden><i class="codicon codicon-game"></i> <span id="st-game-score">0</span></span>
         <span class="status-item" id="st-cookies" title="Cookie Jar" hidden>🍪 ×0</span>
         <span class="status-item" id="st-hunger" title="Hunger">🍪 Hunger 5</span>
         <span class="status-item"><i class="codicon codicon-bell"></i></span>
@@ -248,5 +284,6 @@
 
   <script src="js/snacks.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/muncher.js"></script>
 </body>
 </html>
