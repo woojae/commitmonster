@@ -29,7 +29,8 @@ Then visit http://localhost:8000.
 - `js/muncher.js` — Commit Muncher, the maze game behind `muncher.game` in
   the Explorer (see below).
 - `vendor/` — pinned local copies of the Codicons and Press Start 2P fonts, so
-  the page loads nothing from third-party hosts (see `vendor/README.md`).
+  the page loads nothing from third-party hosts until you play the music video
+  (see `vendor/README.md`).
 
 ## Controls
 
@@ -44,6 +45,7 @@ Then visit http://localhost:8000.
 | Your own code | Open `my-code.txt`, paste, press Feed Me |
 | Extensions | `⇧⌘X`, search the list, click a row for details, Install / Uninstall |
 | Play Commit Muncher | Open `muncher.game` in the Explorer, or `Commit Muncher: Play` in the palette |
+| Watch the music video | Open `music-video.mp4` in the Explorer, or `Commit Monster: Play Music Video` in the palette |
 
 ## Commit Muncher
 
@@ -60,6 +62,13 @@ on touch. The game pauses when you switch tabs. Your best score is kept in
 `localStorage`; nothing leaves the page. Eating bugs, clearing a maze and
 losing all show up in the terminal and the Timeline.
 
+## Music video
+
+`music-video.mp4` plays the [Commit Monster music video](https://www.youtube.com/watch?v=rKczy5114so).
+It shows a poster until you press play. Only then does it embed the player
+from `youtube-nocookie.com`, the one third-party origin the Content Security
+Policy allows, as a frame. Closing or leaving the tab removes the player.
+
 ## Extensions
 
 The Extensions view is a tiny marketplace. Installs are remembered in
@@ -74,6 +83,6 @@ The Extensions view is a tiny marketplace. Installs are remembered in
 - **Commit Monster** cannot be uninstalled. He ate the uninstaller.
 
 A small console API is exposed as `window.CommitMonster` (`feed`, `pause`,
-`resume`, `frenzy`, `openFile`, `commit`, `play`, `tick`, `install`,
+`resume`, `frenzy`, `openFile`, `commit`, `play`, `watch`, `tick`, `install`,
 `uninstall`, `extensions`). The game has its own as `window.CommitMuncher`
 (`start`, `pause`, `toggle`, `playing`, `score`).

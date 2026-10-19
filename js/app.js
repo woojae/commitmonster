@@ -11,6 +11,9 @@
   const DEFAULT_ID = SNACKS[0] ? SNACKS[0].id : null;
   const GAME_ID = 'game';          // muncher.game, the maze in js/muncher.js
   const GAME_FILE = 'muncher.game';
+  const VIDEO_ID = 'video';        // music-video.mp4, the YouTube music video
+  const VIDEO_FILE = 'music-video.mp4';
+  const VIDEO_EMBED = 'https://www.youtube-nocookie.com/embed/rKczy5114so?autoplay=1&rel=0';
   const MAX_SOURCE_LENGTH = 50000;
   const MAX_DISPLAY_LINES = 600;
   const MAX_LOG_LENGTH = 20000;
@@ -86,6 +89,9 @@
   const editorGame = $('editor-game');
   const stGame = $('st-game');
   const stGameScore = $('st-game-score');
+  const editorVideo = $('editor-video');
+  const videoFrame = $('video-frame');
+  const videoPlay = $('video-play');
 
   // ---- Flavor -------------------------------------------------------------
 
@@ -1061,6 +1067,7 @@
   function fileName(id) {
     if (id === 'readme') return 'README.md';
     if (id === GAME_ID) return GAME_FILE;
+    if (id === VIDEO_ID) return VIDEO_FILE;
     const ext = extIdOf(id);
     if (ext) return `Extension: ${extById[ext].name}`;
     return byId[id] ? byId[id].file : 'nothing';
@@ -1069,6 +1076,7 @@
   function fileIcon(id) {
     if (id === 'readme') return '<span class="file-icon fi-md">i</span>';
     if (id === GAME_ID) return '<span class="file-icon fi-game"><i class="codicon codicon-game"></i></span>';
+    if (id === VIDEO_ID) return '<span class="file-icon fi-video"><i class="codicon codicon-play"></i></span>';
     if (extIdOf(id)) return '<span class="file-icon fi-ext"><i class="codicon codicon-extensions"></i></span>';
     const s = byId[id];
     return `<span class="file-icon fi-${s.icon}">${s.icon.toUpperCase()}</span>`;
@@ -1086,6 +1094,8 @@
     readme.classList.toggle('is-active', ui.activeId === 'readme');
     const gameItem = fileTree.querySelector(`[data-file="${GAME_ID}"]`);
     if (gameItem) gameItem.classList.toggle('is-active', ui.activeId === GAME_ID);
+    const videoItem = fileTree.querySelector(`[data-file="${VIDEO_ID}"]`);
+    if (videoItem) videoItem.classList.toggle('is-active', ui.activeId === VIDEO_ID);
     renderExtensions();
   }
 
@@ -1108,6 +1118,8 @@
     editorReadme.hidden = true;
     editorExt.hidden = true;
     editorGame.hidden = true;
+    editorVideo.hidden = true;
+    if (id !== VIDEO_ID) stopVideo();
     overlay.hidden = true;
     if (!id) {
       editorEmpty.hidden = false;
@@ -1118,6 +1130,9 @@
     } else if (id === GAME_ID) {
       editorGame.hidden = false;
       crumbFile.textContent = GAME_FILE;
+    } else if (id === VIDEO_ID) {
+      editorVideo.hidden = false;
+      crumbFile.textContent = VIDEO_FILE;
     } else if (extIdOf(id)) {
       editorExt.hidden = false;
       renderExtPage(extIdOf(id));
@@ -1132,12 +1147,12 @@
       crumbFile.textContent = fileName(id);
     }
     const snack = byId[id];
-    stLang.textContent = id === 'readme' ? 'Markdown' : id === GAME_ID ? 'Game' : extIdOf(id) ? 'Extension' : snack ? snack.lang : 'Plain Text';
+    stLang.textContent = id === 'readme' ? 'Markdown' : id === GAME_ID ? 'Game' : id === VIDEO_ID ? 'Video' : extIdOf(id) ? 'Extension' : snack ? snack.lang : 'Plain Text';
     if (window.CommitMuncher) window.CommitMuncher.setVisible(id === GAME_ID);
   }
 
   function openFile(id, opts = {}) {
-    if (typeof id !== 'string' || (id !== 'readme' && id !== GAME_ID && !extIdOf(id) && !Object.hasOwn(byId, id))) return;
+    if (typeof id !== 'string' || (id !== 'readme' && id !== GAME_ID && id !== VIDEO_ID && !extIdOf(id) && !Object.hasOwn(byId, id))) return;
     if (!ui.openTabs.includes(id)) ui.openTabs.push(id);
     ui.activeId = id;
     const isSnack = !!byId[id];
@@ -1228,7 +1243,7 @@
     if (state.running) { pause(); return; }
     if (state.paused) { resume(); return; }
     let id = ui.activeId;
-    if (!id || !byId[id]) { // README, an extension page or the game: feed him the default snack
+    if (!id || !byId[id]) { // README, an extension page, the game or the video: feed him the default snack
       id = DEFAULT_ID;
       openFile(id);
     }
@@ -1700,6 +1715,7 @@
       { label: 'Commit Monster: Hunger Down', icon: 'arrow-down', run: () => setHunger(-1) },
       { label: 'Commit Monster: Feed Him My Own Code', icon: 'edit', run: () => openFile('own', { fromExplorer: true }) },
       { label: 'Commit Muncher: Play', hint: GAME_FILE, icon: 'game', run: playGame },
+      { label: 'Commit Monster: Play Music Video', hint: VIDEO_FILE, icon: 'play', run: playVideo },
       { label: 'Commit Muncher: Pause / Resume', hint: 'P', icon: 'debug-pause', run: () => { if (ui.activeId === GAME_ID && window.CommitMuncher) window.CommitMuncher.toggle(); else playGame(); } },
       { label: 'Git: Commit', icon: 'git-commit', run: () => { switchView('scm'); commit(); } },
       { label: 'View: Toggle Primary Side Bar', hint: '⌘B', icon: 'layout-sidebar-left', run: toggleSidebar },
@@ -1721,6 +1737,7 @@
       list.push({ label: `snacks/${s.file}`, hint: s.lang, icon: 'file', file: true, run: () => openFile(s.id, { fromExplorer: true }) });
     }
     list.push({ label: GAME_FILE, hint: 'Game', icon: 'game', file: true, run: () => openFile(GAME_ID) });
+    list.push({ label: VIDEO_FILE, hint: 'Video', icon: 'play', file: true, run: () => openFile(VIDEO_ID) });
     list.push({ label: 'README.md', hint: 'Markdown', icon: 'file', file: true, run: () => openFile('readme') });
     return list;
   }
@@ -1934,6 +1951,37 @@
     }
   });
 
+  // ---- Music video ----------------------------------------------------------
+  // The YouTube player is only created on click, so nothing third-party loads
+  // until someone asks for it, and it is torn down when the tab is left.
+
+  function playVideo() {
+    openFile(VIDEO_ID);
+    if (videoFrame.querySelector('iframe')) return;
+    if (state.running) pause();
+    const frame = document.createElement('iframe');
+    frame.src = VIDEO_EMBED;
+    frame.title = 'Commit Monster music video';
+    frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    frame.allowFullscreen = true;
+    // The page sends no referrer, but the YouTube player refuses to start without one.
+    frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    videoPlay.hidden = true;
+    videoFrame.appendChild(frame);
+    tcmd(`open ${VIDEO_FILE}`);
+    tlog('<span class="t-nom">monster:</span> ME DANCE NOW');
+    newPrompt();
+    addTimeline('Watched the music video');
+  }
+
+  function stopVideo() {
+    const frame = videoFrame.querySelector('iframe');
+    if (frame) frame.remove();
+    videoPlay.hidden = false;
+  }
+
+  videoPlay.addEventListener('click', playVideo);
+
   // ---- Boot ---------------------------------------------------------------
 
   function boot() {
@@ -1959,6 +2007,7 @@
   window.CommitMonster = {
     feed, pause, resume, frenzy, openFile, commit,
     play: playGame,
+    watch: playVideo,
     install: (id) => { if (extById[id] && !installed.has(id)) toggleExtension(id); },
     uninstall: (id) => { if (installed.has(id)) toggleExtension(id); },
     get extensions() { return EXTENSIONS.map((e) => ({ id: e.id, name: e.name, installed: installed.has(e.id) })); },
