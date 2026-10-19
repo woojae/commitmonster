@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; font-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; font-src 'self'; img-src 'self' data:; frame-src https://www.youtube-nocookie.com; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>commitmonster — Visual Studio Code</title>
@@ -90,6 +90,7 @@
                 <ul id="file-list"></ul>
               </li>
               <li class="tree-item" role="treeitem" data-file="game"><span class="tree-row"><span class="file-icon fi-game"><i class="codicon codicon-game"></i></span>muncher.game</span></li>
+              <li class="tree-item" role="treeitem" data-file="video"><span class="tree-row"><span class="file-icon fi-video"><i class="codicon codicon-play"></i></span>music-video.mp4</span></li>
               <li class="tree-item" role="treeitem" data-file="readme"><span class="tree-row"><span class="file-icon fi-md">i</span>README.md</span></li>
             </ul>
           </div>
@@ -200,6 +201,17 @@
           </div>
         </div>
 
+        <div class="editor-video" id="editor-video" hidden>
+          <div class="video-frame" id="video-frame">
+            <button type="button" class="video-poster" id="video-play" aria-label="Play the Commit Monster music video">
+              <span class="video-play-icon"><i class="codicon codicon-play"></i></span>
+              <span class="video-title">COMMIT MONSTER</span>
+              <span class="video-sub">the official music video</span>
+            </button>
+          </div>
+          <p class="video-note">Plays from YouTube (youtube-nocookie.com). Nothing loads until you press play. <a href="https://www.youtube.com/watch?v=rKczy5114so" target="_blank" rel="noopener noreferrer">Watch on YouTube <i class="codicon codicon-link-external"></i></a></p>
+        </div>
+
         <div class="editor-readme" id="editor-readme" hidden>
           <h1>Commit Monster</h1>
           <p>A furry blue monster who has never once been full. Point him at a file and he eats it, one character at a time, crumbs and all.</p>
@@ -214,6 +226,8 @@
           <p>Open <b>my-code.txt</b>, paste anything, and press Feed Me. He is not picky.</p>
           <h2>Arcade</h2>
           <p>Open <b>muncher.game</b> to let him loose in a maze made of code. Eat every glyph, dodge the four bugs (NullPointer, RaceCondition, OffByOne, MemoryLeak), and grab a cookie to make them edible for a few seconds. Arrows or <kbd>WASD</kbd> to move, <kbd>P</kbd> to pause.</p>
+          <h2>Music video</h2>
+          <p>Open <b>music-video.mp4</b> to watch the Commit Monster music video. It streams from YouTube once you press play.</p>
           <h2>Known issues</h2>
           <ul>
             <li>Tech debt goes to zero, but so does the codebase.</li>
