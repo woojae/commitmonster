@@ -2017,6 +2017,8 @@
     if (DEFAULT_ID) {
       openFile(DEFAULT_ID);
       showOverlay('ME WANT CODE', 'pick a snack from the explorer, or paste your own<br>click the editor while he eats to make him frantic', 'Feed Me');
+      // The music video is the front page: it opens on top, with the first snack waiting in the next tab.
+      openFile(VIDEO_ID);
     } else {
       renderTabs();
       renderFiles();
